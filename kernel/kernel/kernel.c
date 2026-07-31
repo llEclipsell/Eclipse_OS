@@ -12,4 +12,5 @@ void kernel_main(void) {
 	printf("oct:    %o\n", 0755);
 	printf("ptr:    %p\n", (void*) 0x1000);
 	printf("pct:    100%%\n");
+
 }
