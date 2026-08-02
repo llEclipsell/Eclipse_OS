@@ -19,6 +19,15 @@
 		jmp isr_common
 .endm
 
+.macro IRQ num, vector
+	.global irq\num
+	irq\num:
+		cli
+		pushl $0
+		pushl $\vector
+		jmp irq_common
+.endm
+
 ISR_NOERR 0
 ISR_NOERR 1
 ISR_NOERR 2
@@ -52,6 +61,23 @@ ISR_ERR   29
 ISR_ERR   30
 ISR_NOERR 31
 
+IRQ 0, 32
+IRQ 1, 33
+IRQ 2, 34
+IRQ 3, 35
+IRQ 4, 36
+IRQ 5, 37
+IRQ 6, 38
+IRQ 7, 39
+IRQ 8, 40
+IRQ 9, 41
+IRQ 10, 42
+IRQ 11, 43
+IRQ 12, 44
+IRQ 13, 45
+IRQ 14, 46
+IRQ 15, 47
+
 isr_common:
 	pusha
 	movw %ds, %ax
@@ -76,3 +102,29 @@ isr_common:
 	popa
 	addl $8, %esp
 	iret
+
+irq_common:
+	pusha
+	movw %ds, %ax
+	pushl %eax
+
+	movw $0x10, %ax
+	movw %ax, %ds
+	movw %ax, %es
+	movw %ax, %fs
+	movw %ax, %gs
+
+	pushl %esp
+	call irq_handler
+	addl $4, %esp
+
+	popl %eax
+	movw %ax, %ds
+	movw %ax, %es
+	movw %ax, %fs
+	movw %ax, %gs
+
+	popa
+	addl $8, %esp
+	iret
+
