@@ -34,6 +34,18 @@ static const char* exception_messages[] = {
 };
 
 void isr_handler(struct registers* regs) {
+	if (regs->int_no == 14) {
+		uint32_t cr2;
+		__asm__ volatile ("movl %%cr2, %0" : "=r"(cr2));
+		printf("\n=== PAGE FAULT at 0x%x ===\n", cr2);
+		printf("%s, %s, %s\n",
+		       regs->err_code & 0x1 ? "protection violation" : "not present",
+		       regs->err_code & 0x2 ? "write" : "read",
+		       regs->err_code & 0x4 ? "user" : "kernel");
+		printf("eip=0x%x\n", regs->eip);
+		abort();
+	}
+
 	printf("\n=== EXCEPTION %d: %s ===\n",
 	       regs->int_no, exception_messages[regs->int_no]);
 	printf("err=0x%x  eip=0x%x  cs=0x%x  eflags=0x%x\n",

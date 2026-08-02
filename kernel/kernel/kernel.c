@@ -5,6 +5,7 @@
 #include <kernel/idt.h>
 #include <kernel/multiboot.h>
 #include <kernel/pmm.h>
+#include <kernel/paging.h>
 
 void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
 	terminal_initialize();
@@ -17,6 +18,7 @@ void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
 	gdt_initialize();
 	idt_initialize();
 	pmm_initialize(mbi);
+	paging_initialize();
 
 	printf("Free frames: %d\n", pmm_free_frame_count());
 
@@ -27,4 +29,5 @@ void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
 	pmm_free_frame(a);
 	uint32_t c = pmm_alloc_frame();
 	printf("realloc: 0x%x (should be 0x%x)\n", c, a);
+
 }
