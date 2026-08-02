@@ -20,3 +20,19 @@ void paging_initialize(void) {
 
 	paging_load((uint32_t) page_directory);
 }
+
+void paging_map(uint32_t virt, uint32_t phys, uint32_t flags) {
+	uint32_t dir_idx   = virt >> 22;
+	uint32_t table_idx = (virt >> 12) & 0x3FF;
+
+	if (!(page_directory[dir_idx] & PAGE_PRESENT)) {
+		uint32_t new_table = pmm_alloc_frame();
+		memset((void*) new_table, 0, 4096);
+		page_directory[dir_idx] = new_table | PAGE_PRESENT | PAGE_WRITE;
+	}
+
+	uint32_t* table = (uint32_t*) (page_directory[dir_idx] & ~0xFFF);
+	table[table_idx] = (phys & ~0xFFF) | flags | PAGE_PRESENT;
+
+	__asm__ volatile ("invlpg (%0)" :: "r"(virt) : "memory");
+}

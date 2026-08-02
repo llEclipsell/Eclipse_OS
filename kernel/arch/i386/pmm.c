@@ -70,17 +70,32 @@ void pmm_initialize(struct multiboot_info* mbi) {
 
 /* --- allocation --- */
 
+static uint32_t last_alloc = 0;
+
 uint32_t pmm_alloc_frame(void) {
-	for (uint32_t i = 0; i < total_frames; i++)
+	for (uint32_t i = last_alloc; i < total_frames; i++)
 		if (!frame_test(i)) {
 			frame_set(i);
+			last_alloc = i;
 			return i * PAGE_SIZE;
 		}
-	return 0;  /* out of memory */
+
+	/* Wrap around and try from the start */
+	for (uint32_t i = 0; i < last_alloc; i++)
+		if (!frame_test(i)) {
+			frame_set(i);
+			last_alloc = i;
+			return i * PAGE_SIZE;
+		}
+
+	return 0;	/* Out Of Memory */
 }
 
 void pmm_free_frame(uint32_t addr) {
-	frame_clear(addr / PAGE_SIZE);
+	uint32_t frame = addr / PAGE_SIZE;
+	frame_clear(frame);
+	if (frame < last_alloc)
+		last_alloc = frame;
 }
 
 uint32_t pmm_free_frame_count(void) {
