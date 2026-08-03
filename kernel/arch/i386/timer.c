@@ -1,14 +1,20 @@
 #include <stdio.h>
 #include <kernel/io.h>
 #include <kernel/irq.h>
+#include <kernel/task.h>
+#include <kernel/pic.h>
 
 static uint32_t tick = 0;
 
 static void timer_callback(struct registers* regs) {
 	(void) regs;
 	tick++;
-	if (tick % 100 == 0)
-		printf("tick %d\n", tick);
+
+	if (tick % 10 == 0) {
+		printf("[T]");
+		yield();
+	}
+
 }
 
 void timer_initialize(uint32_t frequency) {

@@ -11,8 +11,9 @@ void irq_install_handler(uint8_t irq, irq_handler_t handler) {
 void irq_handler(struct registers* regs) {
 	uint8_t irq = regs->int_no - 32;
 
+	pic_send_eoi(irq);
+
 	if (handlers[irq])
 		handlers[irq](regs);
 
-	pic_send_eoi(irq);
 }
