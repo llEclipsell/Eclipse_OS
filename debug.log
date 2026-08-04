@@ -3,6 +3,11 @@ SERIAL OK
 *** KERNEL PANIC ***
 Assertion failed: 1 + 1 == 3 at kernel/kernel.c
 Stack trace:
-  [0] 0x101840  panic+0x20
-  [1] 0x1018e4  kernel_main+0x94
+  [0] 0x1018c0  panic+0x20
+  [1] 0x101d54  kernel_main+0x94
   [2] 0x100156  _start+0x11
+
+=== kernel debugger === (type 'help')
+kdb> v 0x800000
+phys = 0xffffffff
+kdb> c

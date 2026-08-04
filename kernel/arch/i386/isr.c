@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <kernel/idt.h>
+#include <kernel/kdb.h>
+#include <kernel/debug.h>
 
 static const char* exception_messages[] = {
 	"Divide by zero",
@@ -46,11 +48,20 @@ void isr_handler(struct registers* regs) {
 		abort();
 	}
 
+	if (regs->int_no == 3) {
+		printf("--- breakpoint at 0x%x ---\n", regs->eip);
+		kdb_enter(regs);
+		return;
+	}
+
 	printf("\n=== EXCEPTION %d: %s ===\n",
 	       regs->int_no, exception_messages[regs->int_no]);
 	printf("err=0x%x  eip=0x%x  cs=0x%x  eflags=0x%x\n",
 	       regs->err_code, regs->eip, regs->cs, regs->eflags);
 	printf("eax=0x%x ebx=0x%x ecx=0x%x edx=0x%x\n",
 	       regs->eax, regs->ebx, regs->ecx, regs->edx);
+
+	stack_trace(16);
+	kdb_enter(regs);
 	abort();
 }

@@ -1,6 +1,8 @@
 #ifndef _KERNEL_DEBUG_H
 #define _KERNEL_DEBUG_H
 
+#define BREAKPOINT() __asm__ volatile ("int3")
+
 #include <stdint.h>
 #include <kernel/idt.h>
 

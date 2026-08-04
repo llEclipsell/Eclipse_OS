@@ -36,3 +36,17 @@ void paging_map(uint32_t virt, uint32_t phys, uint32_t flags) {
 
 	__asm__ volatile ("invlpg (%0)" :: "r"(virt) : "memory");
 }
+
+uint32_t paging_virt_to_phys(uint32_t virt) {
+	uint32_t dir_idx   = virt >> 22;
+	uint32_t table_idx = (virt >> 12) & 0x3FF;
+
+	if (!(page_directory[dir_idx] & PAGE_PRESENT))
+		return 0xFFFFFFFF;                   /* no page table */
+
+	uint32_t* table = (uint32_t*) (page_directory[dir_idx] & ~0xFFF);
+	if (!(table[table_idx] & PAGE_PRESENT))
+		return 0xFFFFFFFF;                   /* not mapped */
+
+	return (table[table_idx] & ~0xFFF) | (virt & 0xFFF);
+}
