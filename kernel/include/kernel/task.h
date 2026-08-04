@@ -19,4 +19,6 @@ void yield(void);
 /* Pure assembly — defined in task_switch.S */
 extern void switch_task(registers_t* old, registers_t* new);
 
+task_t* task_current(void);
+
 #endif

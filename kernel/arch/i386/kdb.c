@@ -6,6 +6,8 @@
 #include <kernel/pmm.h>
 #include <kernel/kheap.h>
 #include <kernel/paging.h>
+#include <kernel/kdb.h>
+#include <kernel/task.h>
 
 static const char kdb_keys[128] = {
 	0, 27, '1','2','3','4','5','6','7','8','9','0','-','=', '\b',
@@ -61,6 +63,27 @@ static void cmd_help(void) {
 	printf("  mem        memory statistics\n");
 	printf("  c          continue\n");
 	printf("  reboot     triple-fault reset\n");
+	printf("  tasks      list all tasks\n");
+}
+
+static void cmd_tasks(void) {
+	task_t* cur = task_current();
+	task_t* t   = cur;
+	int i = 0;
+
+	do {
+		uint32_t off;
+		const char* n = symbol_lookup(t->regs.eip, &off);
+
+		printf("  [%d]%s eip=%x esp=%x %s\n",
+		       i++, (t == cur) ? " *" : "  ",
+		       t->regs.eip, t->regs.esp, n ? n : "?");
+
+		if (t != cur)
+			stack_trace_from(t->regs.ebp, 5);
+
+		t = t->next;
+	} while (t != cur);
 }
 
 void kdb_enter(struct registers* regs) {
@@ -93,6 +116,7 @@ void kdb_enter(struct registers* regs) {
 			printf("free frames: %d\n", pmm_free_frame_count());
 			printf("heap used:   %d bytes\n", kheap_used());
 		}
+		else if (!strcmp(line, "tasks")) cmd_tasks();
 		else if (!strcmp(line, "c"))     return;
 		else if (!strcmp(line, "reboot")) {
 			struct { uint16_t l; uint32_t b; } __attribute__((packed)) z = {0,0};

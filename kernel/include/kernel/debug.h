@@ -17,6 +17,7 @@ const char* symbol_lookup(uint32_t addr, uint32_t* offset);
 void        stack_trace(uint32_t max_frames);
 void        hexdump(uint32_t addr, uint32_t bytes);
 void        dump_registers(struct registers* r);
+void 	    stack_trace_from(uint32_t ebp, uint32_t max_frames);
 
 void panic(const char* msg) __attribute__((noreturn));
 

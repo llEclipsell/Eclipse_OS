@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <kernel/task.h>
 #include <kernel/kheap.h>
+#include <string.h>
 
 #define STACK_SIZE 4096
 
@@ -14,6 +15,7 @@ void tasking_initialize(void) {
 
 void task_create(task_t* task, void (*main)(void), uint32_t flags) {
 	uint32_t stack = (uint32_t) kmalloc_aligned(STACK_SIZE);
+	memset((void*) stack, 0, STACK_SIZE);
 
 	task->regs.eip    = (uint32_t) main;
 	task->regs.esp    = stack + STACK_SIZE;   /* stack grows DOWN */
@@ -33,4 +35,8 @@ void yield(void) {
 		return;
 
 	switch_task(&prev->regs, &running_task->regs);
+}
+
+task_t* task_current(void) {
+	return running_task;
 }

@@ -14,9 +14,21 @@
 #include <kernel/serial.h>
 #include <kernel/debug.h>
 
-__attribute__((noinline)) static void level_three(void) { panic("test panic"); }
-__attribute__((noinline)) static void level_two(void)   { level_three(); }
-__attribute__((noinline)) static void level_one(void)   { level_two(); }
+static task_t task_a, task_b;
+
+static void thread_a(void) {
+	for (;;) {
+		printf("A");
+		yield();
+	}
+}
+
+static void thread_b(void) {
+	for (;;) {
+		printf("B");
+		yield();
+	}
+}
 
 void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
 	serial_initialize();
@@ -38,11 +50,14 @@ void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
 	timer_initialize(100);
 	keyboard_initialize();
 	tasking_initialize();
-	// task_create(&task_a, thread_a, 0x202);
-	// task_create(&task_b, thread_b, 0x202);
+	task_create(&task_a, thread_a, 0x202);
+	task_create(&task_b, thread_b, 0x202);
 
 	__asm__ volatile ("sti");
 
-	ASSERT(1 + 1 == 3);
+	for (;;) {
+		char c = keyboard_getchar();
+		printf("%c", c);
+	}
 
 }

@@ -1,13 +1,14 @@
 SERIAL OK
-
-*** KERNEL PANIC ***
-Assertion failed: 1 + 1 == 3 at kernel/kernel.c
-Stack trace:
-  [0] 0x1018c0  panic+0x20
-  [1] 0x101d54  kernel_main+0x94
-  [2] 0x100156  _start+0x11
-
+BABABABABABABA
 === kernel debugger === (type 'help')
-kdb> v 0x800000
-phys = 0xffffffff
+kdb> tasks
+  [0] * eip=1014df esp=109fa8 yield
+  [1]   eip=1014df esp=c0001fc4 yield
+  [0] 0x101ea2  thread_b+0x22
+  <trace ends at assembly boundary>
+  [2]   eip=1014df esp=c0000fc4 yield
+  [0] 0x101ed2  thread_a+0x22
+  <trace ends at assembly boundary>
 kdb> c
+
+BABABABABABABABABABABABABABABABABABABABABA

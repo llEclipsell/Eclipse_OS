@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <kernel/debug.h>
 #include <kernel/kdb.h>
+#include <kernel/paging.h>
 
 extern uint32_t kernel_start;
 extern uint32_t kernel_end;
@@ -24,20 +25,19 @@ const char* symbol_lookup(uint32_t addr, uint32_t* offset) {
 	return best->name;
 }
 
-void stack_trace(uint32_t max_frames) {
-	struct stackframe* frame;
-	__asm__ volatile ("movl %%ebp, %0" : "=r"(frame));
-
-	printf("Stack trace:\n");
+void stack_trace_from(uint32_t ebp, uint32_t max_frames) {
+	struct stackframe* frame = (struct stackframe*) ebp;
 
 	for (uint32_t i = 0; i < max_frames && frame; i++) {
-		if ((uint32_t) frame < 0x1000 || (uint32_t) frame > 0x10000000) {
-			printf("  <corrupt frame pointer 0x%x>\n", (uint32_t) frame);
+		/* Reject anything unaligned or not actually mapped */
+		if ((uint32_t) frame & 3 ||
+		    paging_virt_to_phys((uint32_t) frame) == 0xFFFFFFFF) {
+			printf("  <bad frame pointer 0x%x>\n", (uint32_t) frame);
 			break;
 		}
 		if (frame->eip < (uint32_t) &kernel_start ||
 		    frame->eip > (uint32_t) &kernel_end) {
-			printf("  [%d] 0x%x  <outside kernel>\n", i, frame->eip);
+			printf("  <trace ends at assembly boundary>\n");
 			break;
 		}
 
@@ -51,6 +51,13 @@ void stack_trace(uint32_t max_frames) {
 
 		frame = frame->ebp;
 	}
+}
+
+void stack_trace(uint32_t max_frames) {
+	uint32_t ebp;
+	__asm__ volatile ("movl %%ebp, %0" : "=r"(ebp));
+	printf("Stack trace:\n");
+	stack_trace_from(ebp, max_frames);
 }
 
 void hexdump(uint32_t addr, uint32_t bytes) {
