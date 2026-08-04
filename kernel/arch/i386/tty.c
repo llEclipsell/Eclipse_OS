@@ -5,6 +5,7 @@
 
 #include <kernel/tty.h>
 #include <kernel/io.h>
+#include <kernel/serial.h>
 
 #include "vga.h"
 
@@ -65,6 +66,8 @@ static void terminal_scroll(void){
 
 
 void terminal_putchar(char c) {
+	serial_putchar(c);
+
         if(c == '\n'){
                 terminal_column = 0;
                 /* The if condn is being checked eachtime and ++term_row is being triggered always eitherway >

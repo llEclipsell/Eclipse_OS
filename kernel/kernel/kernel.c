@@ -11,8 +11,12 @@
 #include <kernel/timer.h>
 #include <kernel/keyboard.h>
 #include <kernel/task.h>
+#include <kernel/serial.h>
 
 void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
+	serial_initialize();
+	serial_write("SERIAL OK\n");
+
 	terminal_initialize();
 
 	if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
