@@ -12,22 +12,6 @@
 #include <kernel/keyboard.h>
 #include <kernel/task.h>
 
-static task_t task_a, task_b;
-
-static void thread_a(void) {
-	for (;;) {
-		printf("A");
-		for (volatile int i = 0; i < 3000000; i++);
-	}
-}
-
-static void thread_b(void) {
-	for (;;) {
-		printf("B");
-		for (volatile int i = 0; i < 3000000; i++);
-	}
-}
-
 void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
 	terminal_initialize();
 
@@ -45,12 +29,15 @@ void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
 	timer_initialize(100);
 	keyboard_initialize();
 	tasking_initialize();
-	task_create(&task_a, thread_a, 0x202);
-	task_create(&task_b, thread_b, 0x202);
+	// task_create(&task_a, thread_a, 0x202);
+	// task_create(&task_b, thread_b, 0x202);
 
 	__asm__ volatile ("sti");
 
-	for (;;)
-		__asm__ volatile ("hlt");
+	for (;;) {
+		char c = keyboard_getchar();
+		printf("%c", c);
+	}
+
 
 }

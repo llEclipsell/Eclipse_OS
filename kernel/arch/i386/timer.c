@@ -3,18 +3,20 @@
 #include <kernel/irq.h>
 #include <kernel/task.h>
 #include <kernel/pic.h>
+#include <kernel/timer.h>
 
-static uint32_t tick = 0;
+static volatile uint32_t tick = 0;
+
+uint32_t timer_ticks(void) {
+	return tick;
+}
 
 static void timer_callback(struct registers* regs) {
 	(void) regs;
 	tick++;
 
-	if (tick % 10 == 0) {
-		printf("[T]");
+	if (tick % TIMER_QUANTUM == 0)
 		yield();
-	}
-
 }
 
 void timer_initialize(uint32_t frequency) {
