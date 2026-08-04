@@ -1,14 +1,29 @@
 SERIAL OK
-BABABABABABABA
-=== kernel debugger === (type 'help')
-kdb> tasks
-  [0] * eip=1014df esp=109fa8 yield
-  [1]   eip=1014df esp=c0001fc4 yield
-  [0] 0x101ea2  thread_b+0x22
-  <trace ends at assembly boundary>
-  [2]   eip=1014df esp=c0000fc4 yield
-  [0] 0x101ed2  thread_a+0x22
-  <trace ends at assembly boundary>
-kdb> c
+initrd at 0x126000, 10240 bytes
+Pradyun CJP
 
-BABABABABABABABABABABABABABABABABABABABABA
+=== kernel debugger === (type 'help')
+kdb> help
+Commands:
+  r          registers
+  bt         backtrace
+  x <addr>   hexdump 128 bytes
+  sym <addr> resolve address to symbol
+  v <addr>   translate virtual to physical
+  mem        memory statistics
+  tasks      list all tasks
+  ls         list initrd files
+  cat <name> print a file
+  history    shows history of commands
+  clear      clear the screen
+  c          continue
+  reboot     triple-fault reset
+kdb> clear
+kdb> clearhelpclearls
+  hello.txt  (23 bytes)
+  version.txt  (10 bytes)
+kdb> cat hello.tctxt
+Hello from the initrd!
+
+kdb> clear
+kdb> clearcat hello.txtlsclearhelpclearlscat hello.txtclear

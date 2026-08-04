@@ -13,22 +13,8 @@
 #include <kernel/task.h>
 #include <kernel/serial.h>
 #include <kernel/debug.h>
-
-static task_t task_a, task_b;
-
-static void thread_a(void) {
-	for (;;) {
-		printf("A");
-		yield();
-	}
-}
-
-static void thread_b(void) {
-	for (;;) {
-		printf("B");
-		yield();
-	}
-}
+#include <kernel/vfs.h>
+#include <kernel/initrd.h>
 
 void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
 	serial_initialize();
@@ -46,12 +32,25 @@ void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
 	pmm_initialize(mbi);
 	paging_initialize();
 	kheap_initialize(0xC0000000, 0x100000);
+
+	if (mbi->flags & MULTIBOOT_INFO_MODS && mbi->mods_count > 0) {
+		struct multiboot_module* mod =
+			(struct multiboot_module*) mbi->mods_addr;
+
+		printf("initrd at 0x%x, %d bytes\n",
+		       mod[0].mod_start, mod[0].mod_end - mod[0].mod_start);
+
+		fs_root = initrd_initialize(mod[0].mod_start);
+	} else {
+		printf("no initrd module found\n");
+	}
+
 	pic_remap(32, 40);
 	timer_initialize(100);
 	keyboard_initialize();
 	tasking_initialize();
-	task_create(&task_a, thread_a, 0x202);
-	task_create(&task_b, thread_b, 0x202);
+	//task_create(&task_a, thread_a, 0x202);
+	//task_create(&task_b, thread_b, 0x202);
 
 	__asm__ volatile ("sti");
 

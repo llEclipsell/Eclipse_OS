@@ -27,6 +27,34 @@ static void terminal_update_cursor(void) {
 	outb(0x3D5, (pos >> 8) & 0xFF);
 }
 
+static size_t terminal_anchor = 0;
+
+void terminal_set_anchor(void) {
+	terminal_anchor = terminal_row;
+}
+
+void terminal_clear_to_anchor(void) {
+	for (size_t y = terminal_anchor; y < VGA_HEIGHT; y++)
+		for (size_t x = 0; x < VGA_WIDTH; x++)
+			terminal_buffer[y * VGA_WIDTH + x] =
+				vga_entry(' ', terminal_color);
+
+	terminal_row    = terminal_anchor;
+	terminal_column = 0;
+	terminal_update_cursor();
+}
+
+void terminal_clear(void) {
+	for (size_t y = 0; y < VGA_HEIGHT; y++)
+		for (size_t x = 0; x < VGA_WIDTH; x++)
+			terminal_buffer[y * VGA_WIDTH + x] =
+				vga_entry(' ', terminal_color);
+
+	terminal_row    = 0;
+	terminal_column = 0;
+	terminal_update_cursor();
+}
+
 void terminal_initialize(void) {
 	terminal_row = 0;
 	terminal_column = 0;
@@ -62,6 +90,9 @@ static void terminal_scroll(void){
         for(size_t x = 0; x < VGA_WIDTH; x++){
                 terminal_buffer[(VGA_HEIGHT - 1) * VGA_WIDTH + x] = vga_entry(' ', terminal_color);
         }
+
+	if (terminal_anchor > 0)
+		terminal_anchor--;
 }
 
 

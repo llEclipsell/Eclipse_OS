@@ -64,8 +64,30 @@ void pmm_initialize(struct multiboot_info* mbi) {
 	for (uint32_t a = 0; a < 0x100000; a += PAGE_SIZE)
 		frame_set(a / PAGE_SIZE);              /* low 1 MiB */
 
-	for (uint32_t a = kstart; a < bmp_end; a += PAGE_SIZE)
-		frame_set(a / PAGE_SIZE);              /* kernel + bitmap */
+	for (uint32_t f = kstart / PAGE_SIZE;
+             f <= (bmp_end - 1) / PAGE_SIZE; f++)
+                frame_set(f);                          /* kernel + bitmap */
+
+	/* Reserve any modules GRUB loaded, or we'll allocate over them */
+	if (mbi->flags & MULTIBOOT_INFO_MODS) {
+		struct multiboot_module* mod =
+			(struct multiboot_module*) mbi->mods_addr;
+
+		for (uint32_t i = 0; i < mbi->mods_count; i++) {
+			uint32_t first = mod[i].mod_start / PAGE_SIZE;
+			uint32_t last  = (mod[i].mod_end - 1) / PAGE_SIZE;
+			for (uint32_t f = first; f <= last; f++)
+				frame_set(f);
+		}
+
+		/* The module descriptor array itself */
+		uint32_t arr_end = mbi->mods_addr +
+		                   mbi->mods_count * sizeof(struct multiboot_module);
+		for (uint32_t f = mbi->mods_addr / PAGE_SIZE;
+		     f <= (arr_end - 1) / PAGE_SIZE; f++)
+			frame_set(f);
+	}
+
 }
 
 /* --- allocation --- */

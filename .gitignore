@@ -5,3 +5,4 @@ isodir/
 *.kernel
 myos
 kernel/arch/i386/symbols.c
+initrd.tar

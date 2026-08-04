@@ -26,5 +26,13 @@ struct multiboot_mmap_entry {
 } __attribute__((packed));
 
 #define MULTIBOOT_MEMORY_AVAILABLE 1
+#define MULTIBOOT_INFO_MODS 0x08     /* flags bit 3 */
+
+struct multiboot_module {
+	uint32_t mod_start;
+	uint32_t mod_end;
+	uint32_t string;
+	uint32_t reserved;
+} __attribute__((packed));
 
 #endif
