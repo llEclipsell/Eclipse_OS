@@ -4,3 +4,4 @@ isodir/
 *.o
 *.kernel
 myos
+kernel/arch/i386/symbols.c

@@ -12,6 +12,11 @@
 #include <kernel/keyboard.h>
 #include <kernel/task.h>
 #include <kernel/serial.h>
+#include <kernel/debug.h>
+
+__attribute__((noinline)) static void level_three(void) { panic("test panic"); }
+__attribute__((noinline)) static void level_two(void)   { level_three(); }
+__attribute__((noinline)) static void level_one(void)   { level_two(); }
 
 void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
 	serial_initialize();
@@ -38,10 +43,6 @@ void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
 
 	__asm__ volatile ("sti");
 
-	for (;;) {
-		char c = keyboard_getchar();
-		printf("%c", c);
-	}
-
+	ASSERT(1 + 1 == 3);
 
 }
