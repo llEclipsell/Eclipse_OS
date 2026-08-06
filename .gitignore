@@ -3,7 +3,7 @@ isodir/
 *.iso
 *.o
 *.kernel
-myos
+eclipseos
 kernel/arch/i386/symbols.c
 initrd.tar
 user/*.o

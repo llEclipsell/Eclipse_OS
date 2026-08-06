@@ -35,4 +35,29 @@ typedef struct {
 
 uint32_t elf_load(uint8_t* data, uint32_t size);
 
+#define PT_DYNAMIC 2
+
+#define ET_EXEC 2
+#define ET_DYN  3
+
+#define DT_NULL   0
+#define DT_REL    17
+#define DT_RELSZ  18
+#define DT_RELENT 19
+
+#define R_386_RELATIVE 8
+
+#define ELF32_R_TYPE(i) ((i) & 0xFF)
+#define ELF32_R_SYM(i)  ((i) >> 8)
+
+typedef struct {
+	int32_t  d_tag;
+	uint32_t d_val;
+} __attribute__((packed)) Elf32_Dyn;
+
+typedef struct {
+	uint32_t r_offset;
+	uint32_t r_info;
+} __attribute__((packed)) Elf32_Rel;
+
 #endif

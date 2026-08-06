@@ -1,6 +1,8 @@
 SERIAL OK
 initrd at 0x128000, 10240 bytes
-loaded hello.elf, entry = 0x40000000
-Hello from a real ELF program!
+elf: applied 2 relocations at base 0x40000000
+loaded hello.elf, entry = 0x40000120
+first line
+second line
 
 [process exited with 0]

@@ -19,8 +19,13 @@ static int ustrlen(const char* s) {
 	return n;
 }
 
+const char* const menu[] = {
+	"first line\n",
+	"second line\n",
+};
+
 void _start(void) {
-	const char* msg = "Hello from a real ELF program!\n";
-	sys_write(msg, ustrlen(msg));
+	for (int i = 0; i < 2; i++)
+		sys_write(menu[i], ustrlen(menu[i]));
 	sys_exit(0);
 }
