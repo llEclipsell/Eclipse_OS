@@ -36,6 +36,10 @@ static const char* exception_messages[] = {
 };
 
 void isr_handler(struct registers* regs) {
+	if (regs->int_no == 128) {
+		syscall_handler(regs);
+		return;
+	}
 	if (regs->int_no == 14) {
 		uint32_t cr2;
 		__asm__ volatile ("movl %%cr2, %0" : "=r"(cr2));

@@ -40,6 +40,8 @@ extern void irq9(void);  extern void irq10(void); extern void irq11(void);
 extern void irq12(void); extern void irq13(void); extern void irq14(void);
 extern void irq15(void);
 
+extern void isr128(void);
+
 static void idt_set_gate(uint8_t num, uint32_t base,
                          uint16_t sel, uint8_t flags) {
 	idt[num].base_low  =  base        & 0xFFFF;
@@ -72,6 +74,8 @@ void idt_initialize(void) {
 
 	for (uint8_t i = 0; i < 16; i++)
 		idt_set_gate(32 + i, (uint32_t) irqs[i], 0x08, 0x8E);
+
+	idt_set_gate(0x80, (uint32_t) isr128, 0x08, 0xEE);
 
 	idt_flush((uint32_t) &ip);
 }

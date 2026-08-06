@@ -18,3 +18,11 @@ gdt_flush:
 	ret
 
 .size gdt_flush, . - gdt_flush
+
+.global tss_flush
+.type tss_flush, @function
+
+tss_flush:
+	movw $0x28, %ax        /* entry 5 → offset 0x28, RPL 0 */
+	ltr %ax
+	ret

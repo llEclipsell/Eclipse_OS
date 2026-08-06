@@ -31,6 +31,9 @@ void paging_map(uint32_t virt, uint32_t phys, uint32_t flags) {
 		page_directory[dir_idx] = new_table | PAGE_PRESENT | PAGE_WRITE;
 	}
 
+	/* Propagate the user bit up to the directory entry */
+	page_directory[dir_idx] |= (flags & PAGE_USER);
+
 	uint32_t* table = (uint32_t*) (page_directory[dir_idx] & ~0xFFF);
 	table[table_idx] = (phys & ~0xFFF) | flags | PAGE_PRESENT;
 

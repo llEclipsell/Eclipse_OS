@@ -28,6 +28,15 @@
 		jmp irq_common
 .endm
 
+.global isr128
+.type isr128, @function
+isr128:
+	cli
+	pushl $0
+	pushl $128
+	jmp isr_common
+
+
 ISR_NOERR 0
 ISR_NOERR 1
 ISR_NOERR 2

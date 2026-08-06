@@ -1,7 +1,8 @@
 #include <stdint.h>
 #include <kernel/gdt.h>
+#include <kernel/tss.h>
 
-#define GDT_ENTRIES 3
+#define GDT_ENTRIES 6
 
 struct gdt_entry {
 	uint16_t limit_low;
@@ -22,7 +23,7 @@ static struct gdt_ptr   gp;
 
 extern void gdt_flush(uint32_t gdt_ptr);
 
-static void gdt_set_gate(int num, uint32_t base, uint32_t limit,
+void gdt_set_gate(int num, uint32_t base, uint32_t limit,
                          uint8_t access, uint8_t gran) {
 	gdt[num].base_low    =  base         & 0xFFFF;
 	gdt[num].base_middle = (base >> 16)  & 0xFF;
@@ -42,5 +43,10 @@ void gdt_initialize(void) {
 	gdt_set_gate(1, 0, 0xFFFFF, 0x9A, 0xC0);  /* kernel code */
 	gdt_set_gate(2, 0, 0xFFFFF, 0x92, 0xC0);  /* kernel data */
 
+	gdt_set_gate(3, 0, 0xFFFFF, 0xFA, 0xC0);  /* user code */
+	gdt_set_gate(4, 0, 0xFFFFF, 0xF2, 0xC0);  /* user data */
+	tss_install(5, 0x10, 0);                  /* TSS descriptor */
+
 	gdt_flush((uint32_t) &gp);
+	tss_flush();
 }

@@ -15,6 +15,10 @@
 #include <kernel/debug.h>
 #include <kernel/vfs.h>
 #include <kernel/initrd.h>
+#include <kernel/tss.h>
+#include <kernel/elf.h>
+
+extern void jump_usermode(uint32_t entry, uint32_t stack);
 
 void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
 	serial_initialize();
@@ -54,9 +58,29 @@ void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
 
 	__asm__ volatile ("sti");
 
-	for (;;) {
-		char c = keyboard_getchar();
-		printf("%c", c);
+	struct fs_node* prog = vfs_finddir(fs_root, "hello.elf");
+	if (!prog) {
+		printf("hello.elf not found in initrd\n");
+		abort();
 	}
+
+	uint8_t* buf = kmalloc(prog->length);
+	vfs_read(prog, 0, prog->length, buf);
+
+	uint32_t entry = elf_load(buf, prog->length);
+	if (!entry) {
+		printf("failed to load hello.elf\n");
+		abort();
+	}
+
+	uint32_t ustack = pmm_alloc_frame();
+	paging_map(0xB0000000, ustack, PAGE_USER | PAGE_WRITE);
+
+	/* Kernel stack for interrupts arriving from ring 3 */
+	uint32_t kstack = (uint32_t) kmalloc_aligned(4096);
+	tss_set_stack(kstack + 4096);
+
+	printf("loaded hello.elf, entry = 0x%x\n", entry);
+	jump_usermode(entry, 0xB0001000);
 
 }
