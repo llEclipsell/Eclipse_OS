@@ -47,19 +47,21 @@ string/strncpy.o \
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \
 
+CRTOBJS=\
+$(ARCH_CRTOBJS) \
+
 OBJS=\
 $(FREEOBJS) \
 $(HOSTEDOBJS) \
 
 LIBK_OBJS=$(FREEOBJS:.o=.libk.o)
 
-#BINARIES=libc.a libk.a # Not ready for libc yet.
-BINARIES=libk.a
+BINARIES=libc.a libk.a
 
 .PHONY: all clean install install-headers install-libs
 .SUFFIXES: .o .libk.o .c .S
 
-all: $(BINARIES)
+all: $(BINARIES) $(CRTOBJS)
 
 libc.a: $(OBJS)
 	$(AR) rcs $@ $(OBJS)
@@ -81,6 +83,7 @@ libk.a: $(LIBK_OBJS)
 
 clean:
 	rm -f $(BINARIES) *.a
+	rm -f $(CRTOBJS)
 	rm -f $(OBJS) $(LIBK_OBJS) *.o */*.o */*/*.o
 	rm -f $(OBJS:.o=.d) $(LIBK_OBJS:.o=.d) *.d */*.d */*/*.d
 
@@ -90,9 +93,10 @@ install-headers:
 	mkdir -p $(DESTDIR)$(INCLUDEDIR)
 	cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
 
-install-libs: $(BINARIES)
+install-libs: $(BINARIES) $(CRTOBJS)
 	mkdir -p $(DESTDIR)$(LIBDIR)
 	cp $(BINARIES) $(DESTDIR)$(LIBDIR)
+	cp $(CRTOBJS) $(DESTDIR)$(LIBDIR)
 
 -include $(OBJS:.o=.d)
 -include $(LIBK_OBJS:.o=.d)

@@ -8,7 +8,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+typedef struct _FILE FILE;
 
+extern FILE* stdin;
+extern FILE* stdout;
+extern FILE* stderr;
+
+#define EOF (-1)
+
+int fprintf(FILE* stream, const char* format, ...);
+int fflush(FILE* stream);
+int fputc(int c, FILE* stream);
+int fputs(const char* s, FILE* stream);
 int printf(const char* __restrict, ...);
 int putchar(int);
 int puts(const char*);
