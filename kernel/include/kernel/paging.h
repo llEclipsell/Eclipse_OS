@@ -2,6 +2,7 @@
 #define _KERNEL_PAGING_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define PAGE_PRESENT 0x1
 #define PAGE_WRITE   0x2
@@ -10,5 +11,6 @@
 void paging_initialize(void);
 void paging_map(uint32_t virt, uint32_t phys, uint32_t flags);
 uint32_t paging_virt_to_phys(uint32_t virt);
+bool paging_is_user(uint32_t virt);
 
 #endif

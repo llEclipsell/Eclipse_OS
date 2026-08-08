@@ -17,6 +17,7 @@
 #include <kernel/initrd.h>
 #include <kernel/tss.h>
 #include <kernel/elf.h>
+#include <kernel/syscall.h>
 
 extern void jump_usermode(uint32_t entry, uint32_t stack);
 
@@ -67,11 +68,14 @@ void kernel_main(uint32_t magic, struct multiboot_info* mbi) {
 	uint8_t* buf = kmalloc(prog->length);
 	vfs_read(prog, 0, prog->length, buf);
 
-	uint32_t entry = elf_load(buf, prog->length);
+	uint32_t brk;
+	uint32_t entry = elf_load(buf, prog->length, &brk);
 	if (!entry) {
 		printf("failed to load hello.elf\n");
 		abort();
 	}
+
+	syscall_set_break(brk);
 
 	uint32_t ustack = pmm_alloc_frame();
 	paging_map(0xB0000000, ustack, PAGE_USER | PAGE_WRITE);

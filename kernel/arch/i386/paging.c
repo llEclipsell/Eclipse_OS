@@ -1,6 +1,7 @@
 #include <string.h>
 #include <kernel/paging.h>
 #include <kernel/pmm.h>
+#include <stdbool.h>
 
 static uint32_t page_directory[1024] __attribute__((aligned(4096)));
 static uint32_t first_table[1024]    __attribute__((aligned(4096)));
@@ -52,4 +53,17 @@ uint32_t paging_virt_to_phys(uint32_t virt) {
 		return 0xFFFFFFFF;                   /* not mapped */
 
 	return (table[table_idx] & ~0xFFF) | (virt & 0xFFF);
+}
+
+bool paging_is_user(uint32_t virt) {
+	uint32_t dir_idx   = virt >> 22;
+	uint32_t table_idx = (virt >> 12) & 0x3FF;
+
+	uint32_t need = PAGE_PRESENT | PAGE_USER;
+
+	if ((page_directory[dir_idx] & need) != need)
+		return false;
+
+	uint32_t* table = (uint32_t*) (page_directory[dir_idx] & ~0xFFF);
+	return (table[table_idx] & need) == need;
 }

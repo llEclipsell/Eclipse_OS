@@ -33,7 +33,7 @@ typedef struct {
 
 #define PT_LOAD 1
 
-uint32_t elf_load(uint8_t* data, uint32_t size);
+uint32_t elf_load(uint8_t* data, uint32_t size, uint32_t* out_break);
 
 #define PT_DYNAMIC 2
 

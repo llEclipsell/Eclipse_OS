@@ -45,9 +45,10 @@ static void apply_relocations(uint8_t* data, Elf32_Ehdr* eh, uint32_t base) {
 	printf("elf: applied %d relocations at base 0x%x\n", count, base);
 }
 
-uint32_t elf_load(uint8_t* data, uint32_t size) {
+uint32_t elf_load(uint8_t* data, uint32_t size, uint32_t* out_break) {
 	Elf32_Ehdr* eh = (Elf32_Ehdr*) data;
 	uint32_t base = 0;
+	uint32_t highest = 0;
 
 	if (size < sizeof(Elf32_Ehdr))            { printf("elf: too small\n");      return 0; }
 	if (memcmp(eh->e_ident, "\x7F" "ELF", 4)) { printf("elf: bad magic\n");      return 0; }
@@ -65,6 +66,9 @@ uint32_t elf_load(uint8_t* data, uint32_t size) {
 		uint32_t start = (base + ph[i].p_vaddr) & ~0xFFF;
 		uint32_t end   = (base + ph[i].p_vaddr + ph[i].p_memsz + 0xFFF) & ~0xFFF;
 
+		if (end > highest)
+			highest = end;
+
 		for (uint32_t v = start; v < end; v += 0x1000) {
 			uint32_t frame = pmm_alloc_frame();
 			if (!frame) { printf("elf: out of memory\n"); return 0; }
@@ -79,6 +83,9 @@ uint32_t elf_load(uint8_t* data, uint32_t size) {
 	}
 
 	apply_relocations(data, eh, base);
+
+	if (out_break)
+		*out_break = highest;
 
 	return base + eh->e_entry;
 }

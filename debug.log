@@ -1,8 +1,9 @@
 SERIAL OK
-initrd at 0x128000, 10240 bytes
-elf: applied 2 relocations at base 0x40000000
-loaded hello.elf, entry = 0x40000120
-first line
-second line
+initrd at 0x12a000, 10240 bytes
+elf: applied 0 relocations at base 0x40000000
+loaded hello.elf, entry = 0x40000110
+syscall test
+eclipseos v0.1
+0xfffffff2
 
 [process exited with 0]

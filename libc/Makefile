@@ -29,6 +29,7 @@ LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
 
 FREEOBJS=\
 $(ARCH_FREEOBJS) \
+errno/errno.o \
 ssp/ssp.o \
 stdio/printf.o \
 stdio/putchar.o \
@@ -46,6 +47,13 @@ string/strncpy.o \
 
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \
+fcntl/open.o \
+unistd/read.o \
+unistd/write.o \
+unistd/close.o \
+unistd/_exit.o \
+unistd/getpid.o \
+unistd/sbrk.o \
 
 CRTOBJS=\
 $(ARCH_CRTOBJS) \
