@@ -20,5 +20,7 @@ void yield(void);
 extern void switch_task(registers_t* old, registers_t* new);
 
 task_t* task_current(void);
+void task_add(task_t* task);
+void task_remove(task_t* task);
 
 #endif

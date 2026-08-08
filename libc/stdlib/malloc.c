@@ -25,7 +25,7 @@ static struct block* grow(size_t size) {
 	need = (need + 0xFFF) & ~(size_t) 0xFFF;      /* whole pages */
 
 	void* p = sbrk(need);
-	if (p == (void*) -1)
+	if (p == (void*) -1 || p == NULL)
 		return NULL;
 
 	struct block* b = (struct block*) p;

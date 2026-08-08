@@ -26,6 +26,7 @@ static void apply_relocations(uint8_t* data, Elf32_Ehdr* eh, uint32_t base) {
 	}
 
 	uint32_t count = 0;
+	uint32_t applied = 0, skipped = 0;
 
 	for (uint32_t off = 0; off < relsz; off += relent) {
 		Elf32_Rel* r = (Elf32_Rel*) (rel + off);
@@ -34,6 +35,14 @@ static void apply_relocations(uint8_t* data, Elf32_Ehdr* eh, uint32_t base) {
 			case R_386_RELATIVE:
 				*(uint32_t*) (base + r->r_offset) += base;
 				count++;
+				break;
+			case R_386_PC32:
+				/* Weak undefined symbols from crtbegin.o / crtend.o —
+				   __register_frame_info and friends. The call sites are
+				   guarded by a null check on the symbol's address, which
+				   is 0 because nothing defines it, so they are never
+				   reached. Leaving these unapplied is correct. */
+				skipped++;
 				break;
 			default:
 				printf("elf: unhandled reloc type %d\n",

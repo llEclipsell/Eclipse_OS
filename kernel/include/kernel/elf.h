@@ -46,6 +46,9 @@ uint32_t elf_load(uint8_t* data, uint32_t size, uint32_t* out_break);
 #define DT_RELENT 19
 
 #define R_386_RELATIVE 8
+#define R_386_32       1
+#define R_386_PC32     2
+#define R_386_RELATIVE 8
 
 #define ELF32_R_TYPE(i) ((i) & 0xFF)
 #define ELF32_R_SYM(i)  ((i) >> 8)

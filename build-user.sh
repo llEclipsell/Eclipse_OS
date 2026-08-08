@@ -1,9 +1,9 @@
 #!/bin/sh
 set -e
 
-i686-eclipseos-gcc -O2 -Wall -Wextra -fPIE \
-	-c user/hello.c -o user/hello.o
-
-i686-eclipseos-gcc -pie -o initrd/hello.elf user/hello.o
-
-echo "built initrd/hello.elf"
+for prog in hello hello2; do
+	i686-eclipseos-gcc -O2 -Wall -Wextra -fPIE \
+		-c user/$prog.c -o user/$prog.o
+	i686-eclipseos-gcc -pie -o initrd/$prog.elf user/$prog.o
+	echo "built initrd/$prog.elf"
+done

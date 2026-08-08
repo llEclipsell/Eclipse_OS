@@ -66,6 +66,10 @@ unistd/sbrk.o \
 unistd/_exit.o \
 unistd/getpid.o \
 fcntl/open.o \
+unistd/fork.o \
+unistd/execve.o \
+unistd/getpid.o \
+sys/wait/wait.o \
 
 CRTOBJS=\
 $(ARCH_CRTOBJS) \

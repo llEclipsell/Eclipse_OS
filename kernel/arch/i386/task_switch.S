@@ -26,11 +26,24 @@ switch_task:
 	orl $0x200, %ebx
 	movl %ebx, 36(%eax)
 
+	/* CR3 — save the current address space */
+        movl %cr3, %ebx
+        movl %ebx, 40(%eax)
+
 	/* --- Load the new task --- */
 	movl 8(%esp), %eax        /* read BEFORE esp changes */
 
 	movl 24(%eax), %esp       /* switch stacks */
 
+	/* Switch address space only if it actually differs */
+	movl 40(%eax), %ecx       /* new cr3 */
+	testl %ecx, %ecx
+	jz 1f                     /* 0 means "don't touch cr3" */
+	movl %cr3, %edx
+	cmpl %ecx, %edx
+	je 1f
+	movl %ecx, %cr3
+1:
 	movl 32(%eax), %ebx
 	pushl %ebx                /* new EIP as a return address */
 

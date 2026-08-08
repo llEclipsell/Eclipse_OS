@@ -18,6 +18,9 @@ void*   sbrk(intptr_t increment);
 
 void _exit(int status) __attribute__((noreturn));
 
+pid_t fork(void);
+int   execve(const char* path, char* const argv[], char* const envp[]);
+
 #ifdef __cplusplus
 }
 #endif

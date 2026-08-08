@@ -1,12 +1,15 @@
-SERIAL OK
-initrd at 0x12a000, 51200 bytes
-elf: unhandled reloc type 2
-elf: unhandled reloc type 2
-elf: applied 65 relocations at base 0x40000000
-loaded hello.elf, entry = 0x4000049c
+initrd at 0x155000, 81920 bytes
+pid=0 dir=0x10e000 kstack=0xc0001000
+elf: applied 62 relocations at base 0x40000000
+hello.elf: entry=0x40000480 brk=0x40003000
 Hello from eclipseos libc!
-numbers: 42 beef ok !
-malloc works
-file: eclipseos v0.1
-no trailing newline here — flush test
-[process exited with 0]
+parent: pid=0
+elf: applied 63 relocations at base 0x40000000
+=== hello2 running ===
+pid=1 marker=0xaaaa
+malloc in new space: 0x4000300c
+test1: reaped 1, status 7 (want 7)
+test2: reaped 2, status 42 (want 42)
+test3: wait returned -1 (want negative)
+
+[init exited with 0 - halting]

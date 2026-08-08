@@ -7,8 +7,12 @@
 #include <kernel/paging.h>
 #include <kernel/vfs.h>
 #include <kernel/pmm.h>
+#include <kernel/process.h>
 
-#define USER_LIMIT 0xC0000000        /* heap and above is kernel territory */
+#define USER_LIMIT     0xC0000000    /* heap and above is kernel territory */
+#define USER_BRK_LIMIT 0xB0000000    /* user stack lives here — don't collide */
+
+/* ---- user pointer validation ---------------------------------------- */
 
 static bool user_range_ok(uint32_t addr, uint32_t len) {
 	if (len == 0)
@@ -16,7 +20,7 @@ static bool user_range_ok(uint32_t addr, uint32_t len) {
 	if (addr >= USER_LIMIT || addr + len < addr || addr + len > USER_LIMIT)
 		return false;
 
-	for (uint32_t a = addr & ~0xFFF; a < addr + len; a += 0x1000)
+	for (uint32_t a = addr & ~0xFFFU; a < addr + len; a += 0x1000)
 		if (!paging_is_user(a))
 			return false;
 
@@ -33,138 +37,211 @@ static bool user_string_ok(const char* s, uint32_t max) {
 	return false;
 }
 
-#define MAX_FDS 16
-
-struct file_descriptor {
-	struct fs_node* node;
-	uint32_t        offset;
-	bool            used;
-};
-
-static struct file_descriptor fd_table[MAX_FDS];
-
-void syscall_initialize(void) {
-	memset(fd_table, 0, sizeof(fd_table));
-
-	/* 0, 1, 2 reserved for stdin/stdout/stderr — no node, handled specially */
-	fd_table[0].used = fd_table[1].used = fd_table[2].used = true;
+static struct open_file* get_fd(int fd) {
+	struct process* p = process_current();
+	if (fd < 0 || fd >= MAX_FDS)
+		return NULL;
+	return p->fds[fd];
 }
 
-static int sys_exit(int code) {
-	printf("\n[process exited with %d]\n", code);
-	for (;;)
-		__asm__ volatile ("hlt");
-	return 0;                            /* unreachable */
+/* ---- syscalls -------------------------------------------------------
+   Every handler takes the same five machine words so the dispatch table
+   needs no function-pointer casts. Unused arguments are discarded. */
+
+static int sys_exit(uint32_t code, uint32_t b, uint32_t c,
+                    uint32_t d, uint32_t e) {
+	(void) b; (void) c; (void) d; (void) e;
+
+	process_exit((int) code);
+	return 0;                                  /* unreachable */
 }
 
-static int sys_write(int fd, const char* buf, uint32_t len) {
+static int sys_write(uint32_t fd, uint32_t buf, uint32_t len,
+                     uint32_t d, uint32_t e) {
+	(void) d; (void) e;
+
 	if (fd != 1 && fd != 2)
 		return -EBADF;
-	if (!user_range_ok((uint32_t) buf, len))
+	if (!user_range_ok(buf, len))
 		return -EFAULT;
 
+	const char* p = (const char*) buf;
 	for (uint32_t i = 0; i < len; i++)
-		printf("%c", buf[i]);
+		printf("%c", p[i]);
 
 	return (int) len;
 }
 
-static int sys_open(const char* path, int flags) {
-	(void) flags;
+static int sys_read(uint32_t fd, uint32_t buf, uint32_t len,
+                    uint32_t d, uint32_t e) {
+	(void) d; (void) e;
 
-	if (!user_string_ok(path, 256))
-		return -EFAULT;
-
-	struct fs_node* node = vfs_finddir(fs_root, path);
-	if (!node)
-		return -ENOENT;
-
-	for (int i = 3; i < MAX_FDS; i++) {
-		if (!fd_table[i].used) {
-			fd_table[i].node   = node;
-			fd_table[i].offset = 0;
-			fd_table[i].used   = true;
-			return i;
-		}
-	}
-	return -EMFILE;
-}
-
-static int sys_read(int fd, char* buf, uint32_t len) {
-	if (fd < 3 || fd >= MAX_FDS || !fd_table[fd].used)
+	struct open_file* f = get_fd((int) fd);
+	if (!f)
 		return -EBADF;
-	if (!user_range_ok((uint32_t) buf, len))
+	if (!user_range_ok(buf, len))
 		return -EFAULT;
 
-	struct file_descriptor* f = &fd_table[fd];
 	uint32_t got = vfs_read(f->node, f->offset, len, (uint8_t*) buf);
 	f->offset += got;
 
 	return (int) got;
 }
 
-static int sys_close(int fd) {
-	if (fd < 3 || fd >= MAX_FDS || !fd_table[fd].used)
+static int sys_open(uint32_t path, uint32_t flags, uint32_t c,
+                    uint32_t d, uint32_t e) {
+	(void) flags; (void) c; (void) d; (void) e;
+
+	if (!user_string_ok((const char*) path, 256))
+		return -EFAULT;
+
+	struct fs_node* node = vfs_finddir(fs_root, (const char*) path);
+	if (!node)
+		return -ENOENT;
+
+	struct process* p = process_current();
+
+	int fd = -1;
+	for (int i = 3; i < MAX_FDS; i++)
+		if (!p->fds[i]) { fd = i; break; }
+
+	if (fd < 0)
+		return -EMFILE;                    /* this process is full */
+
+	struct open_file* of = open_file_alloc(node);
+	if (!of)
+		return -ENFILE;                    /* system-wide table full */
+
+	p->fds[fd] = of;
+	return fd;
+}
+
+static int sys_close(uint32_t fd, uint32_t b, uint32_t c,
+                     uint32_t d, uint32_t e) {
+	(void) b; (void) c; (void) d; (void) e;
+
+	struct open_file* f = get_fd((int) fd);
+	if (!f)
 		return -EBADF;
 
-	fd_table[fd].used = false;
-	fd_table[fd].node = 0;
+	process_current()->fds[fd] = NULL;
+	open_file_release(f);
+
 	return 0;
 }
 
-static int sys_getpid(void) {
-	return 1;                            /* only one process for now */
+static int sys_getpid(uint32_t a, uint32_t b, uint32_t c,
+                      uint32_t d, uint32_t e) {
+	(void) a; (void) b; (void) c; (void) d; (void) e;
+
+	return process_current()->pid;
 }
 
-static uint32_t program_break = 0;
-static uint32_t break_mapped  = 0;
+static int sys_sbrk(uint32_t increment, uint32_t b, uint32_t c,
+                    uint32_t d, uint32_t e) {
+	(void) b; (void) c; (void) d; (void) e;
 
-void syscall_set_break(uint32_t brk) {
-	program_break = break_mapped = (brk + 0xFFF) & ~0xFFF;
-}
+	int inc = (int) increment;                 /* the register is signed */
 
-static int sys_sbrk(int increment) {
-	uint32_t old = program_break;
+	struct process* p = process_current();
+	uint32_t old = p->brk;
 
-	if (increment == 0)
+	if (inc == 0)
 		return (int) old;
-	if (increment < 0)
-		return -ENOSYS;                  /* shrinking not supported yet */
 
-	uint32_t want = program_break + increment;
+	if (inc > 0) {
+		uint32_t want = old + (uint32_t) inc;
 
-	while (break_mapped < want) {
-		uint32_t frame = pmm_alloc_frame();
-		if (!frame)
-			return -ENOMEM;
+		if (want < old || want > USER_BRK_LIMIT)
+			return -ENOMEM;                /* overflow, or into the stack */
 
-		paging_map(break_mapped, frame, PAGE_USER | PAGE_WRITE);
-		memset((void*) break_mapped, 0, 0x1000);
-		break_mapped += 0x1000;
+		for (uint32_t a = old & ~0xFFFU; a < want; a += 0x1000) {
+			if (paging_virt_to_phys(a) != 0xFFFFFFFF)
+				continue;                  /* already mapped */
+
+			uint32_t frame = pmm_alloc_frame();
+			if (!frame)
+				return -ENOMEM;            /* partial growth stays mapped */
+
+			paging_map(a, frame, PAGE_USER | PAGE_WRITE);
+			memset((void*) a, 0, 0x1000);
+		}
+
+		p->brk = want;
+		return (int) old;
 	}
 
-	program_break = want;
+	/* Shrinking */
+	uint32_t want = old + (uint32_t) inc;      /* inc is negative */
+
+	if (want > old)
+		return -EINVAL;                        /* underflowed */
+
+	/* Free only pages entirely above the new break */
+	uint32_t first_dead = (want + 0xFFF) & ~0xFFFU;
+
+	for (uint32_t a = first_dead; a < old; a += 0x1000) {
+		uint32_t phys = paging_virt_to_phys(a);
+		if (phys == 0xFFFFFFFF)
+			continue;
+
+		paging_unmap(a);
+		pmm_free_frame(phys & ~0xFFFU);
+	}
+
+	p->brk = want;
 	return (int) old;
 }
+
+static int sys_execve(uint32_t path, uint32_t b, uint32_t c,
+                      uint32_t d, uint32_t e) {
+	(void) b; (void) c; (void) d; (void) e;
+
+	if (!user_string_ok((const char*) path, 256))
+		return -EFAULT;
+
+	return process_execve((const char*) path);
+}
+
+static int sys_wait(uint32_t status, uint32_t b, uint32_t c,
+                    uint32_t d, uint32_t e) {
+	(void) b; (void) c; (void) d; (void) e;
+
+	if (status && !user_range_ok(status, sizeof(int)))
+		return -EFAULT;
+
+	return process_wait((int*) status);
+}
+
+/* ---- dispatch -------------------------------------------------------- */
 
 typedef int (*syscall_fn)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
 
 static syscall_fn syscall_table[SYSCALL_COUNT] = {
-	[SYS_EXIT]   = (syscall_fn) sys_exit,
-	[SYS_WRITE]  = (syscall_fn) sys_write,
-	[SYS_READ]   = (syscall_fn) sys_read,
-	[SYS_OPEN]   = (syscall_fn) sys_open,
-	[SYS_CLOSE]  = (syscall_fn) sys_close,
-	[SYS_GETPID] = (syscall_fn) sys_getpid,
-	[SYS_SBRK]   = (syscall_fn) sys_sbrk,
+	[SYS_EXIT]   = sys_exit,
+	[SYS_WRITE]  = sys_write,
+	[SYS_READ]   = sys_read,
+	[SYS_OPEN]   = sys_open,
+	[SYS_CLOSE]  = sys_close,
+	[SYS_GETPID] = sys_getpid,
+	[SYS_SBRK]   = sys_sbrk,
+	[SYS_EXECVE] = sys_execve,
+	[SYS_WAIT]   = sys_wait,
 };
 
 void syscall_handler(struct registers* regs) {
+	/* fork is the only syscall that needs the full saved register state —
+	   the child's resume frame is built from it. */
+	if (regs->eax == SYS_FORK) {
+		regs->eax = (uint32_t) process_fork(regs);
+		return;
+	}
+
 	if (regs->eax >= SYSCALL_COUNT || !syscall_table[regs->eax]) {
 		regs->eax = (uint32_t) -ENOSYS;
 		return;
 	}
 
-	regs->eax = (uint32_t) syscall_table[regs->eax](
+	regs->eax = syscall_table[regs->eax](
 		regs->ebx, regs->ecx, regs->edx, regs->esi, regs->edi);
 }

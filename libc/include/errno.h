@@ -14,6 +14,11 @@
 #define EMFILE  24
 #define ERANGE  34
 #define ENOSYS  38
+#define ENFILE 23    /* too many open files in system */
+#define ECHILD  10     /* No child processes */
+#define EAGAIN  11     /* Try again / resource temporarily unavailable */
+#define ENOEXEC  8     /* Exec format error */
+#define E2BIG 7      /* Argument list too long */
 
 #ifdef __cplusplus
 extern "C" {
