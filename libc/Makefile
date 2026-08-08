@@ -35,25 +35,37 @@ stdio/printf.o \
 stdio/putchar.o \
 stdio/puts.o \
 stdlib/abort.o \
+stdlib/abs.o \
+stdlib/atoi.o \
+stdlib/strtol.o \
 string/memcmp.o \
 string/memcpy.o \
 string/memmove.o \
 string/memset.o \
 string/strlen.o \
-string/strchr.o \
-string/strcmp.o \
 string/strcpy.o \
 string/strncpy.o \
+string/strcat.o \
+string/strcmp.o \
+string/strncmp.o \
+string/strchr.o \
+string/strrchr.o \
+string/strstr.o \
 
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \
-fcntl/open.o \
-unistd/read.o \
+stdio/stdio.o \
+stdio/fprintf.o \
+stdlib/exit.o \
+stdlib/malloc.o \
+string/strdup.o \
 unistd/write.o \
+unistd/read.o \
 unistd/close.o \
+unistd/sbrk.o \
 unistd/_exit.o \
 unistd/getpid.o \
-unistd/sbrk.o \
+fcntl/open.o \
 
 CRTOBJS=\
 $(ARCH_CRTOBJS) \

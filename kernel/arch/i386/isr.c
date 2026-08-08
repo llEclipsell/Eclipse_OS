@@ -3,6 +3,7 @@
 #include <kernel/idt.h>
 #include <kernel/kdb.h>
 #include <kernel/debug.h>
+#include <kernel/syscall.h>
 
 static const char* exception_messages[] = {
 	"Divide by zero",

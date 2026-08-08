@@ -17,5 +17,6 @@ struct tss_entry {
 
 void tss_install(int num, uint16_t ss0, uint32_t esp0);
 void tss_set_stack(uint32_t esp0);
+void tss_flush(void);
 
 #endif

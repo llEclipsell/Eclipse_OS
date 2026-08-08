@@ -18,6 +18,14 @@ int   strcmp(const char*, const char*);
 char* strchr(const char*, int);
 char* strcpy(char* __restrict dest, const char* __restrict src);
 char* strncpy(char* __restrict dest, const char* __restrict src, size_t n);
+char* strcat(char* dest, const char* src);
+int   strncmp(const char* a, const char* b, size_t n);
+char* strrchr(const char* s, int c);
+char* strstr(const char* haystack, const char* needle);
+
+#if !defined(__is_libk)
+char* strdup(const char* s);
+#endif
 
 #ifdef __cplusplus
 }

@@ -1,9 +1,12 @@
 SERIAL OK
-initrd at 0x12a000, 10240 bytes
-elf: applied 0 relocations at base 0x40000000
-loaded hello.elf, entry = 0x40000110
-syscall test
-eclipseos v0.1
-0xfffffff2
-
+initrd at 0x12a000, 51200 bytes
+elf: unhandled reloc type 2
+elf: unhandled reloc type 2
+elf: applied 65 relocations at base 0x40000000
+loaded hello.elf, entry = 0x4000049c
+Hello from eclipseos libc!
+numbers: 42 beef ok !
+malloc works
+file: eclipseos v0.1
+no trailing newline here — flush test
 [process exited with 0]
